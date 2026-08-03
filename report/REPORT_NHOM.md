@@ -4,11 +4,14 @@
 
 **Thành viên:** 
 
-Trần Phú Nghĩa - 2A202601298
-Nguyễn Lâm Tùng Bách - 2A202601830
-Cao Minh Quang - 2A202601884
-Trần Minh Quang - 2A202601806
-Điền Mạnh Hùng - 2A202601888
+| STT | Họ và tên            | Mã học viên |
+| :-: | -------------------- | ----------- |
+|  1  | Trần Phú Nghĩa       | 2A202601298 |
+|  2  | Nguyễn Lâm Tùng Bách | 2A202601830 |
+|  3  | Cao Minh Quang       | 2A202601884 |
+|  4  | Trần Minh Quang      | 2A202601806 |
+|  5  | Điền Mạnh Hùng       | 2A202601888 |
+
 **Ngày:** 2026-08-03
 
 ## 1. Lựa chọn tài liệu
