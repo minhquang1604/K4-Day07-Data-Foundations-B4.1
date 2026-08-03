@@ -47,6 +47,7 @@ câu gần nghĩa nhưng có độ dài khác nhau là "không giống nhau".
 > Đáp án: **23 chunks**
 
 **Nếu độ chồng chéo (overlap) tăng lên 100, số lượng chunk thay đổi thế nào? Tại sao muốn độ chồng chéo nhiều hơn?**
+
 `ceil((10000 - 100) / (500 - 100))` = `ceil(9900 / 400)` = `ceil(24.75)` =
 **25 chunks** — tăng 2 chunk so với overlap=50. Overlap lớn hơn giúp một
 câu/điều kiện nằm vắt ngang ranh giới giữa hai chunk ít bị cắt rời hoàn
