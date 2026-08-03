@@ -2,7 +2,13 @@
 
 **Nhóm:** B4.1
 
-**Thành viên:** Điền Mạnh Hùng, Nguyễn Lâm Tùng Bách, Trần Phú Nghĩa, Cao Minh Quang, Trần Minh Quang
+**Thành viên:** 
+
+Trần Phú Nghĩa - 2A202601298
+Nguyễn Lâm Tùng Bách - 2A202601830
+Cao Minh Quang - 2A202601884
+Trần Minh Quang - 2A202601806
+Điền Mạnh Hùng - 2A202601888
 **Ngày:** 2026-08-03
 
 ## 1. Lựa chọn tài liệu
