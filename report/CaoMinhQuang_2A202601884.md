@@ -15,6 +15,7 @@
 ### Độ tương tự Cosine (Cosine Similarity) (Bài tập 1.1)
 
 **Độ tương tự cosine cao (High cosine similarity) nghĩa là gì?**
+
 Hai vector embedding gần như cùng hướng trong không gian nhiều chiều, tức hai
 đoạn văn bản nhiều khả năng diễn đạt cùng một ý dù có thể dùng từ ngữ khác
 nhau.
@@ -32,6 +33,7 @@ nhau.
   thương mại điện tử so với khái niệm machine learning.
 
 **Tại sao độ tương tự cosine (cosine similarity) được ưu tiên hơn khoảng cách Euclid (Euclidean distance) cho text embeddings?**
+
 Cosine chỉ đo *hướng* của vector, bỏ qua độ dài, nên hai câu cùng ý nghĩa
 nhưng khác độ dài/chi tiết vẫn cho điểm cao. Khoảng cách Euclid cộng dồn
 chênh lệch trên từng chiều nên nhạy với độ lớn vector, dễ đánh giá sai hai
