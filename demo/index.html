@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab 7 — RAG Demo | Cao Minh Quang</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --panel-2: #fbfbfd;
+    --ink: #16181d;
+    --ink-2: #5b6270;
+    --ink-3: #8b93a1;
+    --line: #e3e6ec;
+    --accent: #2f6df6;
+    --accent-soft: #e8f0fe;
+    --good: #17803d;
+    --good-soft: #e6f6ec;
+    --warn: #9a5b00;
+    --warn-soft: #fdf1dd;
+    --bad: #c02626;
+    --bad-soft: #fdeaea;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  /* Giao diện sáng cố định — không đổi theo dark mode của hệ điều hành,
+     để màn chiếu lúc thuyết trình luôn hiển thị đúng một kiểu. */
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  a { color: var(--accent); }
+
+  header {
+    background: var(--panel); border-bottom: 1px solid var(--line);
+    padding: 14px 22px; display: flex; flex-wrap: wrap; gap: 12px;
+    align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+  header .sub { color: var(--ink-3); font-size: 12.5px; margin-top: 2px; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge {
+    font-size: 12px; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--ink-2);
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .badge b { color: var(--ink); font-weight: 600; }
+  .badge.ok { background: var(--good-soft); border-color: transparent; color: var(--good); }
+  .badge.warn { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
+
+  .banner {
+    margin: 0; padding: 11px 22px; font-size: 13.5px;
+    background: var(--warn-soft); color: var(--warn);
+    border-bottom: 1px solid var(--line);
+  }
+  .banner code { font-family: var(--mono); font-size: 12.5px; }
+
+  .layout {
+    display: grid; grid-template-columns: 310px minmax(0, 1fr);
+    gap: 20px; padding: 20px; max-width: 1500px; margin: 0 auto; align-items: start;
+  }
+  @media (max-width: 940px) { .layout { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px;
+  }
+  .card + .card { margin-top: 16px; }
+  .card h2 {
+    font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--ink-3); margin: 0 0 12px; font-weight: 650;
+  }
+
+  label.field { display: block; margin-bottom: 14px; }
+  label.field > span {
+    display: block; font-size: 12.5px; color: var(--ink-2); margin-bottom: 6px; font-weight: 500;
+  }
+  select, input[type=number], input[type=text], textarea {
+    width: 100%; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--ink);
+    font-family: inherit; font-size: 14px;
+  }
+  select:focus, input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  .strat { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+  .strat label {
+    display: flex; gap: 9px; align-items: flex-start; padding: 9px 11px;
+    border: 1px solid var(--line); border-radius: 9px; cursor: pointer; background: var(--panel-2);
+  }
+  .strat label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+  .strat input { margin: 3px 0 0; accent-color: var(--accent); }
+  .strat .nm { font-weight: 600; font-size: 13.5px; }
+  .strat .nt { font-size: 12px; color: var(--ink-3); }
+
+  button {
+    font: inherit; cursor: pointer; border-radius: 9px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--ink); padding: 9px 14px;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:hover:not(:disabled) { filter: brightness(1.07); }
+
+  .searchbar { display: flex; gap: 10px; align-items: stretch; }
+  .searchbar textarea { resize: vertical; min-height: 48px; }
+  .searchbar button { white-space: nowrap; padding-inline: 20px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+  .chip {
+    font-size: 12.5px; padding: 5px 11px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--ink-2); cursor: pointer;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--ink); }
+  .chip b { color: var(--accent); font-weight: 650; }
+
+  .progress { height: 6px; background: var(--panel-2); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+  .progress > i { display: block; height: 100%; background: var(--accent); transition: width .25s; }
+
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+
+  .result {
+    border: 1px solid var(--line); border-radius: 11px;
+    padding: 13px 15px; margin-bottom: 11px; background: var(--panel-2);
+  }
+  .result.hit { border-left: 3px solid var(--good); }
+  .result-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+  .rank {
+    font-family: var(--mono); font-size: 12px; color: var(--ink-3);
+    background: var(--bg); border-radius: 6px; padding: 2px 7px;
+  }
+  .result-title { font-weight: 600; font-size: 14px; }
+  .score { margin-left: auto; font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 600; }
+  .bar { height: 4px; background: var(--bg); border-radius: 999px; overflow: hidden; margin-bottom: 9px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); }
+  .snippet {
+    font-size: 13.5px; color: var(--ink-2); white-space: pre-wrap;
+    max-height: 8.5em; overflow: hidden; position: relative; cursor: pointer;
+  }
+  .snippet.open { max-height: none; }
+  .snippet mark { background: var(--good-soft); color: var(--good); font-weight: 600; padding: 0 2px; border-radius: 3px; }
+  .more { font-size: 12px; color: var(--accent); margin-top: 5px; cursor: pointer; }
+
+  .answer { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 13px 15px; border-radius: 0 10px 10px 0; }
+  .answer p { margin: 0; white-space: pre-wrap; font-size: 14px; }
+  .gold { border-left: 3px solid var(--ink-3); background: var(--panel-2); padding: 11px 15px; border-radius: 0 10px 10px 0; font-size: 13.5px; }
+  .gold b { display: block; font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); margin-bottom: 4px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-3); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; }
+  td.num, th.num { text-align: right; font-family: var(--mono); }
+  .scroll-x { overflow-x: auto; }
+
+  .empty { color: var(--ink-3); font-size: 14px; text-align: center; padding: 42px 20px; }
+  .err { background: var(--bad-soft); color: var(--bad); padding: 11px 14px; border-radius: 9px; font-size: 13.5px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Lab 7 — Embedding &amp; Vector Store · RAG Demo</h1>
+    <div class="sub">Cao Minh Quang · 2A202601884 · Nhóm B4.1 — chạy trực tiếp <code>src/CaoMinhQuang/</code></div>
+  </div>
+  <div class="badges" id="badges"></div>
+</header>
+
+<div id="banner"></div>
+
+<div class="layout">
+  <aside>
+    <div class="card">
+      <h2>Chiến lược chunking</h2>
+      <div class="strat" id="strategies"></div>
+      <label class="field" id="paramField">
+        <span id="paramLabel"></span>
+        <input type="number" id="paramInput">
+      </label>
+      <button id="buildBtn" style="width:100%">Nạp lại kho vector</button>
+      <div class="progress" id="progressWrap" hidden><i id="progressBar" style="width:0"></i></div>
+      <div id="buildInfo" style="font-size:12.5px;color:var(--ink-3);margin-top:9px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Tham số truy xuất</h2>
+      <label class="field">
+        <span>Metadata filter — customer_role</span>
+        <select id="roleSel"><option value="">(không lọc)</option></select>
+      </label>
+      <label class="field" style="margin-bottom:0">
+        <span>top_k</span>
+        <input type="number" id="topk" value="3" min="1" max="10">
+      </label>
+    </div>
+
+    <div class="card">
+      <h2>Corpus</h2>
+      <div class="scroll-x"><table id="corpusTable"></table></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="card">
+      <div class="searchbar">
+        <textarea id="q" rows="2" placeholder="Nhập câu hỏi về chính sách Shopee…"></textarea>
+        <button class="primary" id="askBtn">Tìm kiếm</button>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="card" id="out">
+      <div class="empty">Chọn một câu hỏi đánh giá bên trên hoặc tự nhập để bắt đầu.</div>
+    </div>
+  </main>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let STATUS = null, ACTIVE = null, BUSY = false;
+
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num = (n) => new Intl.NumberFormat('vi-VN').format(n);
+
+function currentStrategy() {
+  const el = document.querySelector('input[name=strat]:checked');
+  return el ? el.value : 'sentence';
+}
+function currentParams() {
+  const s = STATUS.strategies.find(x => x.id === currentStrategy());
+  return { [s.param.key]: $('paramInput').value || s.param.default };
+}
+function buildQuery() {
+  const p = currentParams();
+  return new URLSearchParams({ strategy: currentStrategy(), ...p }).toString();
+}
+
+/* ---------- khởi tạo ---------- */
+async function init() {
+  STATUS = await (await fetch('/api/status')).json();
+
+  $('badges').innerHTML = `
+    <span class="badge ${STATUS.is_mock ? 'warn' : 'ok'}">Embedding: <b>${esc(STATUS.backend)}</b></span>
+    <span class="badge ${STATUS.llm_real ? 'ok' : ''}">Agent LLM: <b>${STATUS.llm_real ? 'OpenAI' : 'chưa nối'}</b></span>
+    <span class="badge">${STATUS.corpus.length} tài liệu · ${num(STATUS.total_chars)} ký tự</span>`;
+
+  if (STATUS.is_mock) {
+    $('banner').innerHTML = `<p class="banner"><b>Đang dùng mock embeddings</b> — vector sinh ngẫu nhiên theo hash,
+      điểm số <b>không phản ánh ngữ nghĩa</b>. Để demo thật, đặt <code>EMBEDDING_PROVIDER=openai</code> và
+      <code>OPENAI_API_KEY</code> trong <code>.env</code> rồi khởi động lại.
+      ${STATUS.backend_note ? esc(STATUS.backend_note) : ''}</p>`;
+  }
+
+  $('strategies').innerHTML = STATUS.strategies.map((s, i) => `
+    <label>
+      <input type="radio" name="strat" value="${s.id}" ${i === 0 ? 'checked' : ''}>
+      <span><span class="nm">${esc(s.label)}</span><br><span class="nt">${esc(s.note)}</span></span>
+    </label>`).join('');
+  document.querySelectorAll('input[name=strat]').forEach(r => r.onchange = onStrategyChange);
+
+  $('roleSel').innerHTML += STATUS.roles.map(r => `<option value="${esc(r)}">${esc(r)}</option>`).join('');
+
+  $('chips').innerHTML = STATUS.benchmarks.map(b => `
+    <span class="chip" data-id="${b.id}"><b>Q${b.id}</b> ${esc(b.query.slice(0, 52))}…</span>`).join('');
+  document.querySelectorAll('.chip').forEach(c => c.onclick = () => pickBenchmark(+c.dataset.id));
+
+  $('corpusTable').innerHTML = `
+    <tr><th>Tài liệu</th><th>role</th><th class="num">ký tự</th></tr>` +
+    STATUS.corpus.map(d => `<tr>
+      <td title="${esc(d.doc_id)}">${esc(d.title)}</td>
+      <td>${esc(d.customer_role || '—')}</td>
+      <td class="num">${num(d.chars)}</td></tr>`).join('');
+
+  onStrategyChange();
+  $('buildBtn').onclick = () => build(true);
+  $('askBtn').onclick = () => ask();
+  $('q').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) ask();
+  });
+}
+
+function onStrategyChange() {
+  const s = STATUS.strategies.find(x => x.id === currentStrategy());
+  $('paramLabel').textContent = s.param.label;
+  const inp = $('paramInput');
+  inp.value = s.param.default; inp.min = s.param.min; inp.max = s.param.max;
+  refreshBuildInfo();
+}
+
+/* ---------- build kho vector ---------- */
+async function refreshBuildInfo() {
+  const st = await (await fetch('/api/build?' + buildQuery())).json();
+  if (st.state === 'ready') {
+    $('buildInfo').innerHTML = `Sẵn sàng — <b>${num(st.stats.count)}</b> chunk,
+      TB <b>${st.stats.avg_length}</b> ký tự (${st.stats.min_length}–${num(st.stats.max_length)}).`;
+    $('progressWrap').hidden = true;
+  } else if (st.state === 'error') {
+    $('buildInfo').innerHTML = `<span style="color:var(--bad)">${esc(st.error)}</span>`;
+  } else if (st.state !== 'running') {
+    $('buildInfo').textContent = 'Chưa nạp — bấm "Nạp lại kho vector" hoặc tìm kiếm.';
+  }
+  return st.state;
+}
+
+async function build(force) {
+  const state = await refreshBuildInfo();
+  if (state === 'ready') return true;   // store đã có sẵn trong cache theo (chiến lược, tham số)
+
+  $('buildBtn').disabled = true;
+  $('progressWrap').hidden = false;
+  await fetch('/api/build', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ strategy: currentStrategy(), ...currentParams() })
+  });
+
+  return new Promise(resolve => {
+    const timer = setInterval(async () => {
+      const st = await (await fetch('/api/build?' + buildQuery())).json();
+      if (st.state === 'running') {
+        const pct = st.total ? Math.round(st.done / st.total * 100) : 0;
+        $('progressBar').style.width = pct + '%';
+        $('buildInfo').textContent = `Đang nhúng ${num(st.done)}/${num(st.total)} chunk… (${pct}%)`;
+      } else {
+        clearInterval(timer);
+        $('buildBtn').disabled = false;
+        await refreshBuildInfo();
+        resolve(st.state === 'ready');
+      }
+    }, 400);
+  });
+}
+
+/* ---------- truy vấn ---------- */
+function pickBenchmark(id) {
+  const b = STATUS.benchmarks.find(x => x.id === id);
+  ACTIVE = b;
+  $('q').value = b.query;
+  $('roleSel').value = b.filter || '';
+  ask(b);
+}
+
+async function ask(benchmark) {
+  if (BUSY) return;
+  const query = $('q').value.trim();
+  if (!query) return;
+  if (!benchmark || benchmark.query !== query) {
+    ACTIVE = STATUS.benchmarks.find(b => b.query === query) || null;
+  }
+
+  BUSY = true; $('askBtn').disabled = true;
+  $('out').innerHTML = '<div class="empty">Đang truy xuất…</div>';
+
+  const ok = await build(false);
+  if (!ok) {
+    $('out').innerHTML = '<div class="err">Không nạp được kho vector — xem thông báo ở cột trái.</div>';
+    BUSY = false; $('askBtn').disabled = false; return;
+  }
+
+  const res = await (await fetch('/api/search', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      strategy: currentStrategy(), ...currentParams(),
+      query, top_k: +$('topk').value,
+      role: $('roleSel').value || null,
+      expect: ACTIVE ? ACTIVE.expect : [],
+      with_agent: true
+    })
+  })).json();
+
+  render(res, query);
+  BUSY = false; $('askBtn').disabled = false;
+}
+
+// `marks` là dạng chữ THẬT lấy từ chunk (server trả về), nên khớp chắc chắn
+// kể cả khi gold answer viết "25.000" còn corpus viết "25,000".
+function highlight(text, marks) {
+  let html = esc(text);
+  (marks || []).forEach(m => {
+    const re = new RegExp(esc(m).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    html = html.replace(re, hit => `<mark>${hit}</mark>`);
+  });
+  return html;
+}
+
+function render(res, query) {
+  if (res.error) { $('out').innerHTML = `<div class="err">${esc(res.error)}</div>`; return; }
+
+  const role = $('roleSel').value;
+  const max = Math.max(...res.results.map(r => r.score), 0.0001);
+
+  let html = `<div class="meta-row">
+    <span class="badge">chiến lược <b>${esc(STATUS.strategies.find(s => s.id === currentStrategy()).label)}</b></span>
+    <span class="badge">${num(res.stats.count)} chunk · TB ${res.stats.avg_length} ký tự</span>
+    <span class="badge ${role ? 'ok' : ''}">${role
+      ? `filter <b>customer_role=${esc(role)}</b> → ${num(res.pool)}/${num(res.total_chunks)} chunk ứng viên`
+      : 'không filter — toàn bộ ' + num(res.total_chunks) + ' chunk'}</span>
+  </div>`;
+
+  if (ACTIVE) {
+    const full = res.missing.length === 0;
+    html += `<div class="meta-row">
+      <span class="badge ${full ? 'ok' : 'warn'}">Evidence trong top-${res.results.length}:
+        <b>${res.found.length}/${res.expect.length}</b>${full ? '' : ' — thiếu: ' + res.missing.map(esc).join(', ')}</span>
+    </div>
+    <div class="gold" style="margin-bottom:16px"><b>Gold answer (docs/SHOPEE_POLICY_BENCHMARKS.md)</b>${esc(ACTIVE.gold)}</div>`;
+  }
+
+  html += res.results.length ? res.results.map(r => `
+    <div class="result ${r.hits.length ? 'hit' : ''}">
+      <div class="result-head">
+        <span class="rank">#${r.rank}</span>
+        <span class="result-title">${esc(r.title)}</span>
+        <span class="badge">chunk ${r.chunk_index} · ${num(r.length)} ký tự</span>
+        ${r.customer_role ? `<span class="badge">${esc(r.customer_role)}</span>` : ''}
+        ${r.category ? `<span class="badge">${esc(r.category)}</span>` : ''}
+        <span class="score">${r.score.toFixed(4)}</span>
+      </div>
+      <div class="bar"><i style="width:${Math.max(3, r.score / max * 100)}%"></i></div>
+      <div class="snippet" onclick="this.classList.toggle('open')">${highlight(r.content, r.marks)}</div>
+      <div class="more" onclick="this.previousElementSibling.classList.toggle('open')">bấm để mở/thu gọn chunk</div>
+    </div>`).join('') : '<div class="empty">Không có chunk nào khớp filter.</div>';
+
+  if (res.answer) {
+    html += `<h2 style="font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin:20px 0 10px">
+      Câu trả lời của KnowledgeBaseAgent</h2>
+      <div class="answer"><p>${esc(res.answer)}</p></div>`;
+  }
+
+  $('out').innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>
